@@ -1,0 +1,98 @@
+[
+  {
+    "model": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+    "accuracy": 1.0,
+    "macro_f1": 1.0,
+    "macro_prec": 1.0,
+    "macro_rec": 1.0,
+    "load_s": 6.6,
+    "infer_s": 32.3,
+    "params_M": 124.6,
+    "per_class_f1": {
+      "positive": 1.0,
+      "negative": 1.0,
+      "neutral": 1.0
+    },
+    "confusion_matrix": [
+      [
+        143,
+        0,
+        0
+      ],
+      [
+        0,
+        49,
+        0
+      ],
+      [
+        0,
+        0,
+        8
+      ]
+    ]
+  },
+  {
+    "model": "finiteautomata/bertweet-base-sentiment-analysis",
+    "accuracy": 0.91,
+    "macro_f1": 0.7148,
+    "macro_prec": 0.6994,
+    "macro_rec": 0.739,
+    "load_s": 198.4,
+    "infer_s": 36.3,
+    "params_M": 134.9,
+    "per_class_f1": {
+      "positive": 0.9643,
+      "negative": 0.88,
+      "neutral": 0.3
+    },
+    "confusion_matrix": [
+      [
+        135,
+        3,
+        5
+      ],
+      [
+        1,
+        44,
+        4
+      ],
+      [
+        1,
+        4,
+        3
+      ]
+    ]
+  },
+  {
+    "model": "nlptown/bert-base-multilingual-uncased-sentiment",
+    "accuracy": 0.825,
+    "macro_f1": 0.6111,
+    "macro_prec": 0.6294,
+    "macro_rec": 0.6243,
+    "load_s": 228.2,
+    "infer_s": 32.9,
+    "params_M": 167.4,
+    "per_class_f1": {
+      "positive": 0.917,
+      "negative": 0.7912,
+      "neutral": 0.125
+    },
+    "confusion_matrix": [
+      [
+        127,
+        4,
+        12
+      ],
+      [
+        3,
+        36,
+        10
+      ],
+      [
+        4,
+        2,
+        2
+      ]
+    ]
+  }
+]

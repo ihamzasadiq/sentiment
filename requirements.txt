@@ -1,0 +1,8 @@
+transformers>=5.0
+torch>=2.0
+pandas
+numpy
+scikit-learn
+matplotlib
+streamlit
+huggingface_hub
