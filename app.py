@@ -2,7 +2,7 @@ import logging
 import os
 
 import streamlit as st
-from transformers import Pipeline, pipeline
+from transformers import pipeline
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 logging.getLogger("transformers.utils.loading_report").setLevel(logging.CRITICAL)
@@ -13,17 +13,6 @@ TOPIC_TEMPLATE = "The main topic of this review is {}."
 SENTIMENT_LABELS = ["positive", "negative", "neutral"]
 SENTIMENT_TEMPLATE = "The sentiment of this review is {}."
 
-# --------------------------------------------------------------------------
-# Model selection.
-#
-# APP_MODE=lite (default, Streamlit Cloud friendly ~500 MB of models):
-#   one shared zero-shot NLI model (distilbert-mnli, 67M) does sentiment AND
-#   topics, plus t5-small (60M) for summaries.
-# APP_MODE=full (best accuracy, as evaluated in sentiment.ipynb):
-#   BERTweet for sentiment, mDeBERTa zero-shot for topics, distilbart for
-#   summaries (~2.5 GB of models — needs a machine with enough RAM).
-# Every model can also be overridden individually via env vars.
-# --------------------------------------------------------------------------
 APP_MODE = os.getenv("APP_MODE", "lite")
 
 if APP_MODE == "full":
@@ -39,16 +28,11 @@ else:
     SENT_MAP = None
 
 
-class CustomPipeline(Pipeline):
-    """HF pipeline whose outputs all carry {'metadata': 'huggingface_AI_model'}."""
+def custom_pipeline(task, model=None, **kwargs):
+    pipe = pipeline(task, model=model, **kwargs)
 
-    def __init__(self, task, model=None, **kwargs):
-        self._pipe = pipeline(task, model=model, **kwargs)
-        super().__init__(model=self._pipe.model, tokenizer=self._pipe.tokenizer,
-                         task=task, device=self._pipe.device)
-
-    def __call__(self, inputs, *args, **kwargs):
-        outputs = self._pipe(inputs, *args, **kwargs)
+    def run(inputs, *args, **kw):
+        outputs = pipe(inputs, *args, **kw)
         if isinstance(outputs, dict):
             outputs["metadata"] = METADATA_VALUE
         else:
@@ -57,27 +41,18 @@ class CustomPipeline(Pipeline):
                     o["metadata"] = METADATA_VALUE
         return outputs
 
-    def _sanitize_parameters(self, **kwargs):
-        return {}, {}, {}
-
-    def preprocess(self, inputs, **kwargs):
-        raise NotImplementedError
-
-    def _forward(self, model_inputs, **kwargs):
-        raise NotImplementedError
-
-    def postprocess(self, model_outputs, **kwargs):
-        raise NotImplementedError
+    run.pipe = pipe
+    return run
 
 
 @st.cache_resource(show_spinner="Loading zero-shot NLI model ...")
 def get_nli_pipeline(model_id):
-    return CustomPipeline("zero-shot-classification", model=model_id, device=-1)
+    return custom_pipeline("zero-shot-classification", model=model_id, device=-1)
 
 
 @st.cache_resource(show_spinner="Loading sentiment model ...")
 def get_sentiment_pipeline(model_id):
-    return CustomPipeline("text-classification", model=model_id, device=-1)
+    return custom_pipeline("text-classification", model=model_id, device=-1)
 
 
 @st.cache_resource(show_spinner="Loading summarizer ...")
