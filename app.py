@@ -66,24 +66,30 @@ def _as_dict(output):
     return output if isinstance(output, dict) else output[0]
 
 
+def with_metadata(output):
+    output["metadata"] = output.get("metadata") or METADATA_VALUE
+    return output
+
+
 def predict_sentiment(text):
     if APP_MODE == "full":
         out = _as_dict(get_sentiment_pipeline(SENTIMENT_MODEL)(
             text, truncation=True, max_length=128))
         out["label"] = SENT_MAP.get(out["label"], out["label"])
+        out = with_metadata(out)
     else:
         raw = _as_dict(get_nli_pipeline(SENTIMENT_MODEL)(
             text, candidate_labels=SENTIMENT_LABELS,
             hypothesis_template=SENTIMENT_TEMPLATE))
         out = {"label": raw["labels"][0], "score": raw["scores"][0],
-               "metadata": raw.get("metadata")}
+               "metadata": raw.get("metadata") or METADATA_VALUE}
     return out
 
 
 def predict_topic(text):
     out = _as_dict(get_nli_pipeline(ZS_MODEL)(
         text, candidate_labels=TOPICS, hypothesis_template=TOPIC_TEMPLATE))
-    return out
+    return with_metadata(out)
 
 
 def predict_summary(text, tok, model):
@@ -98,7 +104,8 @@ def predict_summary(text, tok, model):
 def analyze_review(text):
     sent = predict_sentiment(text)
     zs = predict_topic(text)
-    summary = None
+    summary = {"summary_text": "Review is short enough - no summary needed.",
+               "metadata": METADATA_VALUE, "skipped": True}
     if len(text) > 400:
         tok, sum_model = get_summarizer(SUM_MODEL)
         summary = predict_summary(text, tok, sum_model)
@@ -148,11 +155,12 @@ if st.button("Analyze", type="primary") and text.strip():
 
     with c3:
         st.subheader("Summary")
-        if summary:
+        if not summary.get("skipped"):
             st.write(summary["summary_text"])
             st.caption(f"metadata: '{summary['metadata']}'")
         else:
-            st.write("Review is short enough — no summary needed.")
+            st.write(summary["summary_text"])
+            st.caption(f"metadata: '{summary['metadata']}'")
 
     with st.expander("Raw pipeline outputs (with the required metadata key)"):
         st.json({"sentiment": sent,
